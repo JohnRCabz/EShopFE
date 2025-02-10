@@ -1,15 +1,15 @@
 <template>
-  <EShop />
+  <EShopDashboard />
 </template>
 
 <script lang="ts">
 import { defineComponent } from "vue";
-import EShop from "./components/EShop.vue";
+import EShopDashboard from "./components/EShopDashboard.vue";
 
 export default defineComponent({
   name: "App",
   components: {
-    EShop,
+    EShopDashboard,
   },
 });
 </script>

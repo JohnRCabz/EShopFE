@@ -90,7 +90,19 @@
       <!-- Right Column: Cart List -->
       <div class="w-1/2">
         <div class="bg-white p-4 rounded-lg shadow-md">
-          <h2 class="text-xl font-semibold mb-4">Cart</h2>
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-semibold">Cart</h2>
+            <div class="flex items-center space-x-2">
+              <label for="budget" class="font-bold text-sm">Budget</label>
+              <input
+                id="budget"
+                v-model.number="budget"
+                type="number"
+                placeholder="Enter your budget"
+                class="p-2 border rounded w-24"
+              />
+            </div>
+          </div>
           <ul class="space-y-2">
             <li
               v-if="cartItems.items.length === 0"
@@ -140,6 +152,12 @@
             <p class="text-lg font-semibold">
               Total Quantity: {{ cartItems.total_quantity }}
             </p>
+            <button
+              @click="checkout"
+              class="bg-blue-500 text-white px-4 py-2 rounded mt-4"
+            >
+              Checkout
+            </button>
           </div>
         </div>
       </div>
@@ -276,7 +294,7 @@ interface Cart {
 }
 
 export default defineComponent({
-  name: "TodoList",
+  name: "EshopDashboard",
   data() {
     return {
       showModal: false,
@@ -291,6 +309,7 @@ export default defineComponent({
         total_amount: 0,
         total_quantity: 0,
       } as Cart,
+      budget: 0,
       nameError: "",
       descriptionError: "",
       priceError: "",
@@ -301,14 +320,18 @@ export default defineComponent({
   async created() {
     try {
       const response = await axiosInstance.get("/items");
-      this.items = response.data;
+      if (response.data) {
+        this.items = response.data;
+      }
     } catch (error) {
       console.error("Error fetching items:", error);
     }
 
     try {
       const response = await axiosInstance.get("/cart");
-      this.cartItems = response.data;
+      if (response.data) {
+        this.cartItems = response.data;
+      }
     } catch (error) {
       console.error("Error fetching cart items:", error);
     }
@@ -378,7 +401,9 @@ export default defineComponent({
         };
         try {
           const response = await axiosInstance.post("/items", item);
-          this.items.push(response.data);
+          if (response.data) {
+            this.items.push(response.data);
+          }
           this.newItemName = "";
           this.newItemDescription = "";
           this.newItemPrice = 0;
@@ -405,7 +430,9 @@ export default defineComponent({
           quantity: item.addQuantity,
         });
         const response = await axiosInstance.get("/cart");
-        this.cartItems = response.data;
+        if (response.data) {
+          this.cartItems = response.data;
+        }
         item.quantity -= item.addQuantity;
         item.addQuantity = 0;
       } catch (error) {
@@ -417,11 +444,32 @@ export default defineComponent({
       try {
         await axiosInstance.delete(`/cart/${cartItem.id}`);
         const response = await axiosInstance.get("/cart");
-        this.cartItems = response.data;
+        if (response.data) {
+          this.cartItems = response.data;
+        }
         const itemsResponse = await axiosInstance.get("/items");
-        this.items = itemsResponse.data;
+        if (itemsResponse.data) {
+          this.items = itemsResponse.data;
+        }
       } catch (error) {
         console.error("Error removing item from cart:", error);
+      }
+    },
+    async checkout() {
+      if (this.budget > 0 && this.cartItems.total_amount > this.budget) {
+        alert("You have exceeded your budget!");
+        return;
+      }
+      try {
+        await axiosInstance.post("/cart/checkout");
+        const response = await axiosInstance.get("/cart");
+        if (response.data) {
+          this.cartItems = response.data;
+        }
+        alert("Checkout successful!");
+      } catch (error) {
+        console.error("Error during checkout:", error);
+        alert("Checkout failed. Please try again.");
       }
     },
   },
